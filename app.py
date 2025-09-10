@@ -22,7 +22,7 @@ if text_input:
     with st.chat_message("assistant"):
         response_placeholder=st.empty()
         full_response=""
-        for chunk in graph.stream({"messages":HumanMessage(text_input)}):
+        for chunk in graph.stream({"messages":HumanMessage(text_input)},config={"configurable":{"thread_id":201}}):
             #st.markdown(chunk["chatbot"]["messages"])
             if isinstance(chunk["chatbot"]["messages"][-1], AIMessage):
                 response=chunk["chatbot"]["messages"][-1].content
