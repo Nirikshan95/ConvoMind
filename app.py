@@ -1,6 +1,6 @@
 import streamlit as st
 from chatbot import graph,retrive_all_threads
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage
 import uuid
 
 def generate_thread_id():
@@ -40,11 +40,8 @@ for id in reversed(st.session_state.chat_threads):
     if st.sidebar.button(str(id)):
         st.session_state.thread_id = id
         st.session_state.chat_history = load_chat(id)
-        
-    #st.session_state.update({"chat_history":st.session_state.chat_history,"thread_id":chat})
 
-#for message in st.session_state.chat_history:
-#   st.chat_message(message["role"]).markdown(message["content"])
+# Conversations
 for msg in st.session_state.chat_history:
     if isinstance(msg,AIMessage):
         st.chat_message("assistant").markdown(msg.content)
@@ -59,12 +56,12 @@ if text_input:
     st.chat_message("user").write(text_input)
     st.session_state.chat_history.append(HumanMessage(content=text_input))
     with st.chat_message("assistant"):
-        response_placeholder=st.empty()
-        full_response=""
-        for chunk in graph.stream({"messages": st.session_state.chat_history},config={"configurable":{"thread_id":st.session_state.thread_id}}):
-            #st.markdown(chunk["chatbot"]["messages"])
-            if isinstance(chunk["chatbot"]["messages"][-1], AIMessage):
-                response=chunk["chatbot"]["messages"][-1].content
-                full_response=response
-                response_placeholder.markdown(full_response)
-        st.session_state.chat_history.append(AIMessage(content=full_response))
+        response=st.write_stream(
+            chunk.content
+            for chunk,meta in graph.stream(
+                {"messages": st.session_state.chat_history},
+                config={"configurable":{"thread_id":st.session_state.thread_id}},
+                stream_mode="messages"
+                )
+            )
+        st.session_state.chat_history.append(AIMessage(content=response))
